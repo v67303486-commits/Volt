@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VoltWatch Service</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Noto+Sans+Tamil:wght@400;600;800&family=Noto+Sans+Devanagari:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a1519;--p:#112228;--p2:#16303a;--line:#23424d;--ink:#e8f4f6;--mute:#8fb0b8;--heat:#ff7a3d;--cool:#3ad0e6;--ok:#5fd39a;--warn:#f5c542;--crit:#ff4d5e;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme=light]{--bg:#eef5f6;--p:#fff;--p2:#e3eef0;--line:#c9dbe0;--ink:#10262c;--mute:#4f6f78;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Sora,"Noto Sans Tamil","Noto Sans Devanagari",system-ui,Arial,sans-serif;line-height:1.5}
+main{max-width:1240px;margin:0 auto;padding:18px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:800;margin:0;letter-spacing:-.03em;line-height:1.1}
+h1 span{color:var(--heat)}
+h2{margin:0 0 10px;font-size:1rem}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{background:var(--p);color:var(--mute);border:0;padding:8px 14px;font:inherit;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--heat);color:#1a0d05;font-weight:600}
+select,textarea,input{background:var(--p);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit}
+textarea{width:100%;min-height:96px;resize:vertical}
+label{color:var(--mute);font-size:.85rem}
+button:focus-visible,select:focus-visible,textarea:focus-visible,tr:focus-visible,a:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+.cols{display:grid;grid-template-columns:1fr 1.1fr;gap:16px}
+.card{background:var(--p);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.veh{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;cursor:pointer;background:var(--bg)}
+.veh[aria-selected=true]{border-color:var(--heat);box-shadow:inset 4px 0 var(--heat)}
+.veh:hover{background:var(--p2)}
+.logo{flex:none;width:56px;height:40px;border-radius:8px;display:grid;place-items:center;font-weight:800;font-size:.7rem;color:#fff;overflow:hidden}
+.logo img{max-width:100%;max-height:100%}
+.veh .m{flex:1;min-width:0}
+.veh b{display:block}.veh small{color:var(--mute)}
+.st{padding:2px 10px;border-radius:99px;font-size:.78rem;font-weight:600;white-space:nowrap}
+.ok{background:#5fd39a22;color:var(--ok)}.warn{background:#f5c54222;color:var(--warn)}.crit{background:#ff4d5e22;color:var(--crit)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.stats div{background:var(--bg);border-radius:10px;padding:10px}
+.stats b{display:block;font-size:1.15rem}.stats span{font-size:.75rem;color:var(--mute)}
+.meter{height:9px;border-radius:5px;background:var(--line);overflow:hidden;margin:6px 0 12px}
+.meter i{display:block;height:100%}
+.btn{background:var(--heat);color:#1a0d05;border:0;border-radius:10px;padding:11px 18px;font:inherit;font-weight:600;cursor:pointer}
+.btn.alt{background:var(--p2);color:var(--ink);border:1px solid var(--line);text-decoration:none;display:inline-block}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+ul{list-style:none;margin:0;padding:0;max-height:200px;overflow:auto}
+li{padding:8px 0;border-bottom:1px solid var(--line);font-size:.85rem}
+li time{color:var(--mute);margin-right:8px}
+.empty{color:var(--mute);padding:30px 0;text-align:center}
+footer{margin-top:18px;color:var(--mute);font-size:.8rem;max-width:90ch}
+code{background:var(--p2);padding:1px 6px;border-radius:5px}
+@media(max-width:900px){.cols{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+@media(prefers-color-scheme:light){:root:not([data-theme=dark]){--bg:#eef5f6;--p:#fff;--p2:#e3eef0;--line:#c9dbe0;--ink:#10262c;--mute:#4f6f78;color-scheme:light}}
+</style></head><body><main>
+<header><h1>Volt<span>Watch</span> <small id="sub" style="font-size:.45em;font-weight:400;color:var(--mute)"></small></h1>
+<div class="seg" role="group" aria-label="Language" id="langs"></div></header>
+<div class="bar"><label for="mech" id="lm"></label><select id="mech"></select></div>
+<div class="cols"><section class="card"><h2 id="hv"></h2><div id="list" role="listbox"></div></section>
+<section class="card" id="detail"></section></div>
+<footer id="foot"></footer>
+<div class="bar" style="margin-top:12px"><label for="api">SMS server URL</label><input id="api" type="url" size="36" placeholder="https://your-server/sms"></div>
+</main>
+<script>
+let SMS_API="";try{SMS_API=localStorage.getItem("smsApi")||""}catch(e){}  // your SMS server URL, e.g. "https://your-server/sms" (POST {to, message}). Can also be typed in the box at the bottom.
+const LOGOS={};              // paste original logos: {Tata:"data:image/png;base64,...", Mahindra:"...", Maruti:"..."}
+const BRAND={Tata:"#2a6fdb",Mahindra:"#c8102e",Maruti:"#1b75bc"};
+const FREE_TOTAL=3;
+const L={
+en:{sub:"Service desk",mech:"Mechanic",hv:"My assigned vehicles",owner:"Owner",phone:"Phone",model:"Model",soh:"Battery health",wear:"Battery used",temp:"Pack temperature",heat:"Heat multiplier",life:"Battery life left",every:"Check every",next:"Next check",done:"Services done",missed:"Services missed",free:"Free services",claimed:"claimed",yr:"yr",mo:"months",req:"Request service",reason:"Reason for request",prev:"SMS to owner",send:"Send SMS",open:"Open in Messages",log:"Sent messages",none:"No messages yet. Raise a request to notify the owner.",pick:"Select a vehicle to see its battery and service details.",ok:"Healthy",warn:"Watch",crit:"Critical",overdue:"Overdue",r1:"a battery check",r2:"an overheating check",r3:"a routine service",queued:"Sent",draft:"Draft only (no SMS server)",fail:"Failed",tpl:(o,m,i,me,r)=>`Hi ${o}, your ${m} (${i}) needs ${r}. Mechanic ${me} has raised a request. Please call to book a slot. - VoltWatch`,foot:"Sample data. Set SMS_API to send real texts, and add original logos in LOGOS. Life left = (health - 80) / yearly fade, sped up by heat above 32°C."},
+ta:{sub:"சர்வீஸ் மேசை",mech:"மெக்கானிக்",hv:"எனக்கு ஒதுக்கப்பட்ட வாகனங்கள்",owner:"உரிமையாளர்",phone:"தொலைபேசி",model:"மாடல்",soh:"பேட்டரி ஆரோக்கியம்",wear:"பயன்படுத்திய பேட்டரி",temp:"பேக் வெப்பநிலை",heat:"வெப்ப பெருக்கி",life:"மீதமுள்ள பேட்டரி ஆயுள்",every:"சோதனை இடைவெளி",next:"அடுத்த சோதனை",done:"செய்த சர்வீஸ்",missed:"தவறவிட்ட சர்வீஸ்",free:"இலவச சர்வீஸ்",claimed:"பெற்றது",yr:"ஆண்டு",mo:"மாதம்",req:"சர்வீஸ் கோரிக்கை",reason:"கோரிக்கைக்கான காரணம்",prev:"உரிமையாளருக்கு SMS",send:"SMS அனுப்பு",open:"மெசேஜில் திற",log:"அனுப்பிய செய்திகள்",none:"இன்னும் செய்திகள் இல்லை. உரிமையாளருக்கு தெரிவிக்க கோரிக்கை அனுப்பவும்.",pick:"பேட்டரி மற்றும் சர்வீஸ் விவரங்களைப் பார்க்க வாகனத்தைத் தேர்ந்தெடுக்கவும்.",ok:"நலம்",warn:"கவனிக்க",crit:"அவசரம்",overdue:"தாமதம்",r1:"பேட்டரி சோதனை",r2:"அதிக வெப்ப சோதனை",r3:"வழக்கமான சர்வீஸ்",queued:"அனுப்பப்பட்டது",draft:"வரைவு மட்டும் (SMS சர்வர் இல்லை)",fail:"தோல்வி",tpl:(o,m,i,me,r)=>`வணக்கம் ${o}, உங்கள் ${m} (${i}) வாகனத்திற்கு ${r} தேவை. மெக்கானிக் ${me} கோரிக்கை அனுப்பியுள்ளார். நேரம் பதிவு செய்ய அழைக்கவும். - VoltWatch`,foot:"இது மாதிரி தரவு. உண்மையான SMS அனுப்ப SMS_API அமைக்கவும்; அசல் லோகோக்களை LOGOS-இல் சேர்க்கவும்."},
+hi:{sub:"सर्विस डेस्क",mech:"मैकेनिक",hv:"मुझे सौंपे गए वाहन",owner:"मालिक",phone:"फ़ोन",model:"मॉडल",soh:"बैटरी स्वास्थ्य",wear:"बैटरी उपयोग",temp:"पैक तापमान",heat:"हीट गुणक",life:"बची बैटरी आयु",every:"जांच अंतराल",next:"अगली जांच",done:"की गई सर्विस",missed:"छूटी सर्विस",free:"मुफ़्त सर्विस",claimed:"ली गई",yr:"वर्ष",mo:"माह",req:"सर्विस अनुरोध",reason:"अनुरोध का कारण",prev:"मालिक को SMS",send:"SMS भेजें",open:"मैसेज में खोलें",log:"भेजे गए संदेश",none:"अभी कोई संदेश नहीं। मालिक को सूचित करने के लिए अनुरोध भेजें।",pick:"बैटरी और सर्विस विवरण देखने के लिए वाहन चुनें।",ok:"ठीक",warn:"ध्यान दें",crit:"गंभीर",overdue:"देरी",r1:"बैटरी जांच",r2:"ओवरहीटिंग जांच",r3:"नियमित सर्विस",queued:"भेजा गया",draft:"सिर्फ़ ड्राफ़्ट (SMS सर्वर नहीं)",fail:"विफल",tpl:(o,m,i,me,r)=>`नमस्ते ${o}, आपके ${m} (${i}) को ${r} की ज़रूरत है। मैकेनिक ${me} ने अनुरोध भेजा है। स्लॉट बुक करने के लिए कॉल करें। - VoltWatch`,foot:"यह नमूना डेटा है। असली SMS के लिए SMS_API सेट करें; असली लोगो LOGOS में जोड़ें।"}};
+const NAMES={en:"English",ta:"தமிழ்",hi:"हिन्दी"};
+const MECHS=[{id:"m1",name:"Murugan"},{id:"m2",name:"Karthik"},{id:"m3",name:"Senthil"}];
+const V=[
+{id:"TN33-1201",b:"Tata",m:"Nexon EV",age:2.4,km:41000,soh:93.1,temp:35.2,o:"Vairavan",ph:"9445575216",lang:"ta",me:"m1",done:4,missed:0,free:3,chk:"2026-07-14"},
+{id:"TN33-1203",b:"Mahindra",m:"XUV400",age:3.2,km:78000,soh:86.9,temp:38.4,o:"Divya",ph:"9445575216",lang:"en",me:"m1",done:5,missed:2,free:3,chk:"2026-02-03"},
+{id:"TN33-1206",b:"Tata",m:"Nexon EV",age:4.1,km:121000,soh:81.4,temp:41.6,o:"Ramesh",ph:"9445575216",lang:"hi",me:"m1",done:6,missed:4,free:2,chk:"2025-12-20"},
+{id:"TN33-1202",b:"Tata",m:"Punch EV",age:1.1,km:16500,soh:97.4,temp:33.1,o:"Suresh",ph:"9445575216",lang:"ta",me:"m2",done:2,missed:0,free:2,chk:"2026-08-30"},
+{id:"TN33-1207",b:"Tata",m:"Punch EV",age:2,km:52000,soh:94.2,temp:36.0,o:"Priya",ph:"9445575216",lang:"en",me:"m2",done:3,missed:1,free:3,chk:"2026-05-11"},
+{id:"TN33-1204",b:"Mahindra",m:"BE 6",age:.6,km:9200,soh:98.8,temp:32.4,o:"Arun",ph:"9445575216",lang:"en",me:"m3",done:1,missed:0,free:1,chk:"2026-09-10"},
+{id:"TN33-1205",b:"Maruti",m:"e Vitara",age:.4,km:6100,soh:99.1,temp:32.8,o:"Lakshmi",ph:"9445575216",lang:"ta",me:"m3",done:1,missed:0,free:0,chk:"2026-09-18"},
+{id:"TN33-1208",b:"Mahindra",m:"XUV400",age:1.8,km:33000,soh:95,temp:34.0,o:"Karthika",ph:"9445575216",lang:"hi",me:"m3",done:3,missed:0,free:3,chk:"2026-06-02"}];
+let lang="en",mech="m1",sel=null,reason="r1",log=[];
+const t=k=>L[lang][k]??L.en[k],$=s=>document.querySelector(s);
+function calc(v){
+const m=Math.min(3,Math.max(.5,Math.pow(2,(v.temp-32)/10))),fade=(100-v.soh)/v.age*m,y=Math.max(0,(v.soh-80)/fade),mo=y<2?3:y<4?6:12,due=new Date(v.chk);due.setMonth(due.getMonth()+mo);
+const s=y<1.5||v.temp>40||v.missed>=3?"crit":y<3||v.missed>=1||v.temp>36?"warn":"ok";
+return{m,y,mo,due,s,over:due<new Date()}}
+const logo=v=>LOGOS[v.b]?`<img src="${LOGOS[v.b]}" alt="${v.b}">`:v.b;
+const mname=()=>MECHS.find(m=>m.id===mech).name;
+function msg(v){return L[v.lang].tpl(v.o,v.b+" "+v.m,v.id,mname(),L[v.lang][reason])}
+function render(){
+document.documentElement.lang=lang;
+$("#sub").textContent=t("sub");$("#lm").textContent=t("mech");$("#hv").textContent=t("hv");$("#foot").textContent=t("foot");
+$("#langs").innerHTML=Object.keys(NAMES).map(k=>`<button aria-pressed="${k===lang}" data-l="${k}">${NAMES[k]}</button>`).join("");
+$("#mech").innerHTML=MECHS.map(m=>`<option value="${m.id}"${m.id===mech?" selected":""}>${m.name}</option>`).join("");
+const mine=V.filter(v=>v.me===mech);
+if(!mine.find(v=>v.id===sel))sel=null;
+$("#list").innerHTML=mine.map(v=>{const c=calc(v);return`<div class="veh" role="option" tabindex="0" data-id="${v.id}" aria-selected="${v.id===sel}"><span class="logo" style="background:${BRAND[v.b]}">${logo(v)}</span><span class="m"><b>${v.id}</b><small>${v.b} ${v.m} · ${v.o}</small></span><span class="st ${c.s}">${t(c.s)}</span></div>`}).join("");
+const d=$("#detail"),v=V.find(x=>x.id===sel);
+if(!v){d.innerHTML=`<p class="empty">${t("pick")}</p>`;return}
+const c=calc(v),col=c.s==="ok"?"var(--ok)":c.s==="warn"?"var(--warn)":"var(--crit)",fmt=x=>x.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}),m=msg(v);
+d.innerHTML=`<h2>${v.b} ${v.m} · ${v.id}</h2>
+<span class="st ${c.s}">${t(c.s)}</span>
+<div class="stats">
+<div><b>${v.o}</b><span>${t("owner")}</span></div>
+<div><b>${v.ph.replace(/(\d{5})(\d{5})/,"$1 $2")}</b><span>${t("phone")}</span></div>
+<div><b>${v.b} ${v.m}</b><span>${t("model")}</span></div></div>
+<label>${t("wear")}: ${(100-v.soh).toFixed(1)}% · ${t("soh")}: ${v.soh.toFixed(1)}%</label>
+<div class="meter"><i style="width:${100-v.soh}%;background:${col}"></i></div>
+<div class="stats">
+<div><b>${v.temp.toFixed(1)}°C</b><span>${t("temp")}</span></div>
+<div><b>×${c.m.toFixed(2)}</b><span>${t("heat")}</span></div>
+<div><b>${c.y.toFixed(1)} ${t("yr")}</b><span>${t("life")}</span></div>
+<div><b>${c.mo} ${t("mo")}</b><span>${t("every")}</span></div>
+<div><b style="color:${c.over?"var(--crit)":"inherit"}">${fmt(c.due)}</b><span>${t("next")}${c.over?" · "+t("overdue"):""}</span></div>
+<div><b>${v.done}</b><span>${t("done")}</span></div>
+<div><b style="color:${v.missed?"var(--warn)":"inherit"}">${v.missed}</b><span>${t("missed")}</span></div>
+<div><b>${v.free} / ${FREE_TOTAL}</b><span>${t("free")} ${t("claimed")}</span></div></div>
+<h2>${t("req")}</h2>
+<label for="rs">${t("reason")}</label><br>
+<select id="rs">${["r1","r2","r3"].map(k=>`<option value="${k}"${k===reason?" selected":""}>${t(k)}</option>`).join("")}</select>
+<p><label for="sm">${t("prev")} (${NAMES[v.lang]}) → +91 ${v.ph}</label></p>
+<textarea id="sm" readonly>${m}</textarea>
+<div class="row"><button class="btn" id="send">${t("send")}</button><a class="btn alt" href="sms:+91${v.ph}?&body=${encodeURIComponent(m)}">${t("open")}</a></div>
+<h2 style="margin-top:18px">${t("log")}</h2>
+<ul>${log.filter(x=>x.id===v.id).map(x=>`<li><time>${x.at}</time>${x.st} · ${x.msg}</li>`).join("")||`<li>${t("none")}</li>`}</ul>`}
+async function send(){
+const b=$("#send");if(b)b.disabled=true;
+const v=V.find(x=>x.id===sel),message=msg(v);let st=t("draft");
+if(SMS_API){try{const r=await fetch(SMS_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:"+91"+v.ph,message})});st=r.ok?t("queued"):t("fail")}catch(e){st=t("fail")}}
+log.unshift({id:v.id,at:new Date().toLocaleTimeString("en-IN"),st,msg:message});render()}
+document.addEventListener("click",e=>{
+const l=e.target.closest("[data-l]"),r=e.target.closest(".veh");
+if(l){lang=l.dataset.l;render()}else if(r){sel=r.dataset.id;render()}else if(e.target.id==="send")send()});
+document.addEventListener("keydown",e=>{const r=e.target.closest&&e.target.closest(".veh");if(r&&(e.key==="Enter"||e.key===" ")){e.preventDefault();sel=r.dataset.id;render()}});
+document.addEventListener("change",e=>{if(e.target.id==="mech"){mech=e.target.value;sel=null;render()}if(e.target.id==="rs"){reason=e.target.value;render()}});
+$("#api").value=SMS_API;
+$("#api").addEventListener("change",e=>{SMS_API=e.target.value.trim();try{localStorage.setItem("smsApi",SMS_API)}catch(x){}});
+render();
+</script></body></html>
